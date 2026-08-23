@@ -21,7 +21,7 @@ export default function Index() {
   const stopRecording = async () => {
     await recorder.stop();
     console.log("Recording:", recorder.uri);
-    sendData();
+    sendData(recorder.uri as any);
   };
 
   return (

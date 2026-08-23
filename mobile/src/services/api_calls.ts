@@ -1,16 +1,18 @@
-const sendData = async () => {
+const sendData = async (uri: string) => {
   try {
-    const response = await fetch("http://192.168.1.10:5000/api/test", {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+
+    const formData = new FormData();
+
+    formData.append("file", blob, "recording.m4a");
+
+    const result = await fetch("http://192.168.1.10:5000/api/speech", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        message: "Hello from Expo!",
-      }),
+      body: formData,
     });
 
-    const data = await response.json();
+    const data = await result.json();
 
     console.log(data);
   } catch (error) {

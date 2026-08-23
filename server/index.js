@@ -6,9 +6,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-app.post("/api/test", (req, res) => {
+app.post("/api/speech", (req, res) => {
   res.json({
-    message: "Test endpoint reached successfully!",
+    message: "Speech endpoint reached successfully!",
   });
 });
 
