@@ -1,6 +1,7 @@
 import { Text, View, StyleSheet } from "react-native";
 import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
 import { Button } from "react-native";
+import sendData from "../services/api_calls";
 
 export default function Index() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
@@ -20,6 +21,7 @@ export default function Index() {
   const stopRecording = async () => {
     await recorder.stop();
     console.log("Recording:", recorder.uri);
+    sendData();
   };
 
   return (
