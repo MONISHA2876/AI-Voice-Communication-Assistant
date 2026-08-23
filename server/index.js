@@ -1,18 +1,11 @@
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
-const fs = require("fs");
-const dotenv = require("dotenv");
-const { DeepgramClient } = require("@deepgram/sdk");
 
-dotenv.config();
+const { transcribeAudio } = require("./services/speech-to-text");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
-
-const deepgram = new DeepgramClient({
-    apiKey: process.env.DEEPGRAM_API_KEY,
-});
 
 app.use(express.json());
 app.use(cors());
@@ -21,27 +14,14 @@ app.post("/api/speech", upload.single("file"), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({
+                success: false,
                 error: "No audio file received",
             });
         }
 
-        console.log("Audio received:", req.file.originalname);
-
-        const result = await deepgram.listen.v1.media.transcribeFile(
-            fs.createReadStream(req.file.path),
-            {
-                model: "nova-3",
-                smart_format: true,
-            }
-        );
-
-        const transcript =
-            result.results.channels[0].alternatives[0].transcript;
+        const transcript = await transcribeAudio(req.file.path);
 
         console.log("Transcript:", transcript);
-
-        // Delete temporary audio file
-        fs.unlinkSync(req.file.path);
 
         res.json({
             success: true,
@@ -50,10 +30,6 @@ app.post("/api/speech", upload.single("file"), async (req, res) => {
 
     } catch (error) {
         console.error("STT Error:", error);
-
-        if (req.file?.path && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
 
         res.status(500).json({
             success: false,
