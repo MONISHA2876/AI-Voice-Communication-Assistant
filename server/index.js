@@ -4,6 +4,7 @@ const multer = require("multer");
 
 const { transcribeAudio } = require("./services/speech-to-text");
 const { send_data_to_llm } = require("./services/llm-service");
+const { getMessages } = require("./services/message");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
@@ -30,10 +31,25 @@ app.post("/api/speech", upload.single("file"), async (req, res) => {
         const llmResponse = await send_data_to_llm(transcript);
         console.log("LLM Response:", llmResponse);
 
+        // Parse the LLM response to determine the service
+
+        let services = [];
+        try {
+            const parsedResponse = JSON.parse(llmResponse);
+            services = parsedResponse.services || [];
+        } catch (error) {
+            console.error("Error parsing LLM response:", error);
+        }
+
         res.json({
             success: true,
             text: transcript,
+            services: services
         });
+        
+        for (const service of services) {
+            getMessages(service);
+        }
 
     } catch (error) {
         console.error("STT Error:", error);

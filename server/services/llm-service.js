@@ -15,19 +15,20 @@ const send_data_to_llm = async (userRequest) =>{
             - sms: read SMS messages
             - email: read emails
 
-            Determine which service the user is requesting.
-            If none apply, return unsupported.
+            Determine which services the user is requesting.
 
             Return ONLY valid JSON:
+
             {
             "supported": true,
-            "service": "whatsapp"
+            "services": ["whatsapp", "sms"]
             }
 
-            or:
+            If none of the requested services are available:
+
             {
             "supported": false,
-            "service": null
+            "services": []
             }
 
             User request: "${userRequest}"
