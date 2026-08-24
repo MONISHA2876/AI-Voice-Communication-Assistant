@@ -3,6 +3,7 @@ const cors = require("cors");
 const multer = require("multer");
 
 const { transcribeAudio } = require("./services/speech-to-text");
+const { send_data_to_llm } = require("./services/llm-service");
 
 const app = express();
 const upload = multer({ dest: "uploads/" });
@@ -19,9 +20,15 @@ app.post("/api/speech", upload.single("file"), async (req, res) => {
             });
         }
 
-        const transcript = await transcribeAudio(req.file.path);
+        // Transcribe the audio file using Deepgram
 
+        const transcript = await transcribeAudio(req.file.path);
         console.log("Transcript:", transcript);
+
+        // Send the transcript to the LLM service
+
+        const llmResponse = await send_data_to_llm(transcript);
+        console.log("LLM Response:", llmResponse);
 
         res.json({
             success: true,
