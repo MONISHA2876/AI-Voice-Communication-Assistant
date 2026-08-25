@@ -36,10 +36,20 @@ Mock Data
 project-root/
 │
 ├── mobile/
-│   └── Expo React Native application
+│   └── src
+|       └── app
+|       |   └── _layout.tsx 
+|       |   └── index.tsx 
+|       └── services
+|           └── api_calls.tsx 
 │
 ├── server/
-│   └── Node.js + Express backend
+│   └── data
+|   |   └── messages.js
+│   └── services
+|       └── llm-service.js
+|       └── message.js
+|       └── speech-to-text.js
 │
 ├── docs/
 │   └── architecture.md
