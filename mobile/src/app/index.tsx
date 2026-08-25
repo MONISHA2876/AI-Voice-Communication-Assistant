@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Text, View, StyleSheet, Pressable, Animated } from "react-native";
 import { useAudioRecorder, RecordingPresets, requestRecordingPermissionsAsync } from 'expo-audio';
 import sendData from "../services/api_calls";
@@ -6,30 +6,34 @@ import sendData from "../services/api_calls";
 export default function Index() {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const [isRecording, setIsRecording] = useState(false);
-  const pulse = useRef(new Animated.Value(1)).current;
+  const ripple = useRef(new Animated.Value(0)).current;
 
-  const startPulse = () => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.15, duration: 700, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 700, useNativeDriver: true }),
-      ])
-    ).start();
-  };
+  useEffect(() => {
+    if (isRecording) {
+      Animated.loop(
+        Animated.timing(ripple, { toValue: 1, duration: 1600, useNativeDriver: true })
+      ).start();
+    } else {
+      ripple.stopAnimation();
+      ripple.setValue(0);
+    }
+  }, [isRecording]);
 
-  const stopPulse = () => {
-    pulse.stopAnimation();
-    Animated.timing(pulse, { toValue: 1, duration: 200, useNativeDriver: true }).start();
-  };
+  const rippleStyle = (delayScale: number) => ({
+    opacity: ripple.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0] }),
+    transform: [
+      {
+        scale: ripple.interpolate({ inputRange: [0, 1], outputRange: [1, delayScale] }),
+      },
+    ],
+  });
 
   const startRecording = async () => {
     const { granted } = await requestRecordingPermissionsAsync();
-
     if (!granted) {
       console.log("Microphone permission denied");
       return;
     }
-
     await recorder.prepareToRecordAsync();
     recorder.record();
   };
@@ -43,11 +47,9 @@ export default function Index() {
   const handlePress = async () => {
     if (isRecording) {
       setIsRecording(false);
-      stopPulse();
       await stopRecording();
     } else {
       setIsRecording(true);
-      startPulse();
       await startRecording();
     }
   };
@@ -62,14 +64,23 @@ export default function Index() {
       </View>
 
       <View style={styles.center}>
-        <Animated.View style={{ transform: [{ scale: pulse }] }}>
+        <View style={styles.ringWrap}>
+          <View style={[styles.ring, styles.ringOuter]} />
+          <View style={[styles.ring, styles.ringMid]} />
+          {isRecording && (
+            <>
+              <Animated.View style={[styles.ring, styles.ringMid, rippleStyle(1.6)]} />
+              <Animated.View style={[styles.ring, styles.ringOuter, rippleStyle(1.3)]} />
+            </>
+          )}
           <Pressable
             onPress={handlePress}
             style={[styles.button, isRecording && styles.buttonRecording]}
           >
-            <Text style={styles.icon}>{isRecording ? "⏹️" : "🎙️"}</Text>
+            <Text style={styles.icon}>{isRecording ? "🎧" : "🎙️"}</Text>
           </Pressable>
-        </Animated.View>
+        </View>
+
         <Text style={styles.status}>
           {isRecording ? "Listening..." : "Tap to speak"}
         </Text>
@@ -83,7 +94,7 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FBF9FF",
+    backgroundColor: "#08040D",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 60,
@@ -92,46 +103,67 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#4A3F6B",
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
   subtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: "#9B8FB5",
+    marginTop: 8,
+    fontSize: 16,
+    color: "#A9A3B8",
   },
   center: {
     alignItems: "center",
   },
-  button: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: "#E9E3FB",
+  ringWrap: {
+    width: 260,
+    height: 260,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#B9A6E8",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 6,
+  },
+  ring: {
+    position: "absolute",
+    borderRadius: 999,
+  },
+  ringOuter: {
+    width: 260,
+    height: 260,
+    backgroundColor: "rgba(123,44,191,0.12)",
+  },
+  ringMid: {
+    width: 200,
+    height: 200,
+    backgroundColor: "rgba(123,44,191,0.22)",
+  },
+  button: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#7B2CBF",
+    shadowColor: "#9D4EDD",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.6,
+    shadowRadius: 20,
+    elevation: 10,
   },
   buttonRecording: {
-    backgroundColor: "#F7D6E0",
-    shadowColor: "#F0A8C0",
+    backgroundColor: "#9D4EDD",
   },
   icon: {
-    fontSize: 56,
+    fontSize: 54,
+    color: "#FFFFFF",
   },
   status: {
-    marginTop: 18,
-    fontSize: 15,
-    color: "#6B5E8C",
-    fontWeight: "500",
+    marginTop: 24,
+    fontSize: 18,
+    color: "#E8E3F5",
+    fontWeight: "600",
   },
   hint: {
-    fontSize: 12,
-    color: "#B7AECB",
+    fontSize: 13,
+    color: "#6E6680",
   },
 });
