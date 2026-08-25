@@ -6,31 +6,28 @@ This project is a full-stack mobile application consisting of:
 
 * **Mobile:** React Native application built with Expo.
 * **Server:** Node.js backend built with Express.
-* **Database:** To be integrated later.
+* **STT:** Deepgram Speech-to-Text for converting voice input into text.
+* **LLM:** Gemini to understand user's request and selecting required service
+* **Message Data:** Currently mocked using local JavaScript 
 
 The mobile application will communicate with the backend through APIs.
 
 ## 2. High-Level Architecture
 
 ```text
-┌─────────────────────┐
-│   Expo Mobile App   │
-│ React Native + TS   │
-└──────────┬──────────┘
-           │
-           │ HTTP / REST API
-           ▼
-┌─────────────────────┐
-│    Node.js Server   │
-│      Express        │
-└──────────┬──────────┘
-           │
-           │
-           ▼
-┌─────────────────────┐
-│      Database       │
-│   To be integrated  │
-└─────────────────────┘
+Expo App
+   ↓
+Node.js / Express
+   ↓
+Deepgram STT
+   ↓
+Gemini LLM
+   ↓
+Service Selection
+   ↓
+WhatsApp / SMS / Email
+   ↓
+Mock Data
 ```
 
 ## 3. Project Structure
@@ -45,35 +42,29 @@ project-root/
 │   └── Node.js + Express backend
 │
 ├── docs/
-│   └── Project documentation
+│   └── architecture.md
 │
 ├── .gitignore
 └── README.md
 ```
 
-## 4. Current Implementation
+## 4. Current Flow
 
-### Mobile
-
-The mobile application has been initialized using **Expo** and will contain the React Native frontend.
-
-### Server
-
-The backend has been initialized using **Node.js** and **Express**.
-
-The server will handle:
-
-* API requests
-* Business logic
-* Authentication
-* Database communication
-* Other backend services
-
-### Database
-
-No database has been integrated yet.
-
-The database technology will be decided during development based on the application's requirements.
+```text
+Voice Input
+    ↓
+Audio Upload
+    ↓
+Speech-to-Text
+    ↓
+User Request
+    ↓
+LLM selects required service(s)
+    ↓
+Message Service
+    ↓
+Mock Messages
+```
 
 ## 5. Communication
 
@@ -99,11 +90,8 @@ Mobile App
 
 As development progresses, this document will be updated with:
 
-* API structure
-* Authentication flow
-* Database architecture
-* Backend modules
-* Deployment architecture
-* External services
-* Security considerations
-* Major architectural decisions
+* Real WhatsApp/SMS/Email integrations
+* Database
+* More assistant capabilities
+* Authentication
+* Security and deployment
