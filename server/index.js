@@ -3,7 +3,10 @@ const cors = require("cors");
 const multer = require("multer");
 
 const { transcribeAudio } = require("./services/speech-to-text");
-const { send_data_to_llm } = require("./services/llm-service");
+const {
+    send_data_to_llm,
+    get_response_from_llm
+} = require("./services/llm-service");
 const { getMessages } = require("./services/message");
 
 const app = express();
@@ -14,6 +17,7 @@ app.use(cors());
 
 app.post("/api/speech", upload.single("file"), async (req, res) => {
     try {
+        // STEP 1: Audio -> Transcript
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -21,43 +25,72 @@ app.post("/api/speech", upload.single("file"), async (req, res) => {
             });
         }
 
-        // Transcribe the audio file using Deepgram
-
         const transcript = await transcribeAudio(req.file.path);
         console.log("Transcript:", transcript);
 
-        // Send the transcript to the LLM service
-
+        // STEP 2: Transcript -> Router LLM
         const llmResponse = await send_data_to_llm(transcript);
         console.log("LLM Response:", llmResponse);
 
-        // Parse the LLM response to determine the service
+        // STEP 3: Parse router response
+        const parsedResponse =
+            typeof llmResponse === "string"
+                ? JSON.parse(llmResponse)
+                : llmResponse;
 
-        let services = [];
-        try {
-            const parsedResponse = JSON.parse(llmResponse);
-            services = parsedResponse.services || [];
-        } catch (error) {
-            console.error("Error parsing LLM response:", error);
+        if (!parsedResponse.supported) {
+            return res.json({
+                success: true,
+                text: transcript,
+                response:
+                    "I can help you read WhatsApp messages, SMS messages, and emails, but this request is outside my supported capabilities.",
+                services: [],
+                messages: {},
+            });
         }
 
-        res.json({
+        const services = parsedResponse.services || [];
+        const messagesByService = {};
+
+        // STEP 4: Fetch each service SEQUENTIALLY
+        for (const service of services) {
+            console.log(`Fetching ${service} messages...`);
+
+            const messages = await getMessages(service);
+
+            messagesByService[service] = messages;
+
+            console.log(`${service} messages:`, messages);
+        }
+
+        // STEP 5: Get the natural-language response
+        console.log(messagesByService);
+        const finalResponse = await get_response_from_llm({
+            userRequest: transcript,
+            routerResponse: parsedResponse,
+            messages: messagesByService,
+        });
+
+        console.log("Final LLM Response:", finalResponse);
+
+        // STEP 6: Respond only after all steps finish
+        return res.json({
             success: true,
             text: transcript,
-            services: services
+            services,
+            messages: messagesByService,
+            response: finalResponse,
         });
-        
-        for (const service of services) {
-            getMessages(service);
-        }
 
     } catch (error) {
-        console.error("STT Error:", error);
+        console.error("Pipeline Error:", error);
 
-        res.status(500).json({
-            success: false,
-            error: "Speech-to-text failed",
-        });
+        if (!res.headersSent) {
+            return res.status(500).json({
+                success: false,
+                error: "Pipeline failed",
+            });
+        }
     }
 });
 

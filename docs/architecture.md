@@ -47,7 +47,7 @@ project-root/
 │   └── data
 |   |   └── messages.js
 │   └── services
-|       └── llm-service.js
+|       └── llm-service.js654321`
 |       └── message.js
 |       └── speech-to-text.js
 │
